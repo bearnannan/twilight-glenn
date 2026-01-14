@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Project } from '@/types/project';
-import { X, Save, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Plus, Trash2, Sparkles } from 'lucide-react';
 
 interface EditProjectModalProps {
     project: Project;
@@ -26,6 +26,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
     const [actionItems, setActionItems] = useState<string[]>(project.actionItems);
 
     const [isSaving, setIsSaving] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     if (!isOpen) return null;
 
@@ -42,6 +43,37 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
     const removeActionItem = (index: number) => {
         const newItems = actionItems.filter((_, i) => i !== index);
         setActionItems(newItems);
+    };
+
+    const handleGenerateAI = async () => {
+        setIsGenerating(true);
+        try {
+            const res = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: formData.title,
+                    progress: formData.progress,
+                    locationName: formData.locationName,
+                    currentItems: actionItems
+                })
+            });
+            const data = await res.json();
+
+            if (data.suggestedItems && Array.isArray(data.suggestedItems)) {
+                // Determine if we should append or replace. 
+                // Let's append items for better UX
+                const newItems = [...actionItems, ...data.suggestedItems].filter(item => item.trim() !== '');
+                setActionItems(newItems);
+            } else {
+                alert('ไม่สามารถสร้างรายการได้: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI');
+        } finally {
+            setIsGenerating(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -134,9 +166,20 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                รายการดำเนินงาน ({actionItems.length})
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    รายการดำเนินงาน ({actionItems.length})
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateAI}
+                                    disabled={isGenerating}
+                                    className="text-xs flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium px-2 py-1 rounded-md hover:bg-purple-50 transition-colors disabled:opacity-50"
+                                >
+                                    <Sparkles className="w-3.5 h-3.5" />
+                                    {isGenerating ? 'Gemini กำลังคิด...' : 'ให้ Gemini ช่วยคิด'}
+                                </button>
+                            </div>
                             <div className="space-y-2">
                                 {actionItems.map((item, index) => (
                                     <div key={index} className="flex gap-2">

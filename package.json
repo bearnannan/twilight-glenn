@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@react-google-maps/api": "^2.19.2",
     "firebase": "^12.7.0",
     "lucide-react": "^0.309.0",
