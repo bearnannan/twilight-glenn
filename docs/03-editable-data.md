@@ -17,9 +17,15 @@
 - [MODIFY] `src/components/Dashboard/ProjectCard.tsx`: เพิ่มปุ่ม "แก้ไข" (รูปดินสอ)
 - [MODIFY] `src/components/Dashboard/DashboardClient.tsx`: เชื่อมต่อ Modal กับการทำงานจริง (State Management)
 
+### 3. Enhancements (Phase 3.5 - User Request)
+- [MODIFY] `src/components/Dashboard/EditProjectModal.tsx`:
+    - เพิ่ม Input สำหรับ **Latitude/Longitude** (Coordinates)
+    - เพิ่ม Textarea สำหรับ **Action Items** (แก้ไขแบบ 1 บรรทัด = 1 รายการ)
+
 ## Verification Plan
 ### Manual Verification
 1.  กดปุ่มแก้ไขที่การ์ดโครงการ
 2.  ลองเปลี่ยนชื่อหรือความคืบหน้า (Progress)
-3.  กดบันทึก -> หน้าเว็บต้องเปลี่ยนทันที
-4.  รีเฟรชหน้าเว็บ -> ค่าต้องยังอยู่ (ตรวจสอบว่าลง Database จริง)
+3.  **[New] แก้ไขพิกัด Lat/Lng** -> กดบันทึก -> Map ต้องขยับไปตำแหน่งใหม่
+4.  **[New] แก้ไขรายการ Action Items** (เพิ่ม/ลบ/แก้) -> กดบันทึก -> รายการในการ์ดต้องเปลี่ยน
+5.  รีเฟรชหน้าเว็บ -> ค่าต้องยังอยู่ (ตรวจสอบว่าลง Database จริง)
