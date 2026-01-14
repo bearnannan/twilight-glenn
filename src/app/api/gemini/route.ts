@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' }, { apiVersion: 'v1' });
 
         const { title, progress, locationName, currentItems } = await request.json();
 
