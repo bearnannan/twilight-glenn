@@ -10,10 +10,17 @@ interface SidebarProps {
     projects: Project[];
     selectedProjectId: string | number | null;
     onSelectProject: (id: string | number) => void;
-    onSeedData?: () => void; // Optional for compatibility
+    onSeedData?: () => void;
+    onEditProject?: (project: Project) => void;
 }
 
-export default function Sidebar({ projects, selectedProjectId, onSelectProject, onSeedData }: SidebarProps) {
+export default function Sidebar({
+    projects,
+    selectedProjectId,
+    onSelectProject,
+    onSeedData,
+    onEditProject
+}: SidebarProps) {
     const itemRefs = useRef<{ [key: string | number]: HTMLDivElement | null }>({});
 
     useEffect(() => {
@@ -50,7 +57,10 @@ export default function Sidebar({ projects, selectedProjectId, onSelectProject, 
                             : 'hover:bg-gray-100/50'
                             }`}
                     >
-                        <ProjectCard project={project} />
+                        <ProjectCard
+                            project={project}
+                            onEdit={onEditProject}
+                        />
                     </div>
                 ))}
             </div>

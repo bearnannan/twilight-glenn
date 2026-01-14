@@ -1,10 +1,9 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
 import MapSection from './MapSection';
 import Sidebar from './Sidebar';
-import { getProjects, seedProjects } from '@/services/projectService';
+import EditProjectModal from './EditProjectModal';
+import { getProjects, seedProjects, updateProject } from '@/services/projectService';
 
 interface DashboardClientProps {
     initialProjects: Project[];
@@ -13,6 +12,7 @@ interface DashboardClientProps {
 export default function DashboardClient({ initialProjects }: DashboardClientProps) {
     const [selectedProjectId, setSelectedProjectId] = useState<string | number | null>(null);
     const [projects, setProjects] = useState<Project[]>(initialProjects);
+    const [editingProject, setEditingProject] = useState<Project | null>(null);
 
     // Fetch data from Firestore on mount
     const refreshData = async () => {
@@ -42,6 +42,21 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
         }
     };
 
+    const handleEditProject = (project: Project) => {
+        setEditingProject(project);
+    };
+
+    const handleUpdateProject = async (id: string | number, data: Partial<Project>) => {
+        const success = await updateProject(id, data);
+        if (success) {
+            // Optimistic update or refresh
+            refreshData();
+            // alert('บันทึกข้อมูลเรียบร้อย!'); // Optional
+        } else {
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+        }
+    };
+
     return (
         <div className="flex-1 pt-16 grid grid-cols-1 md:grid-cols-12 overflow-hidden">
             {/* Map Section (70% on Desktop) */}
@@ -60,8 +75,19 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
                     selectedProjectId={selectedProjectId}
                     onSelectProject={handleSelectProject}
                     onSeedData={handleSeedData}
+                    onEditProject={handleEditProject}
                 />
             </div>
+
+            {/* Edit Modal */}
+            {editingProject && (
+                <EditProjectModal
+                    project={editingProject}
+                    isOpen={!!editingProject}
+                    onClose={() => setEditingProject(null)}
+                    onSave={handleUpdateProject}
+                />
+            )}
         </div>
     );
 }

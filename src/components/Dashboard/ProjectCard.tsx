@@ -1,16 +1,17 @@
 import { Project } from '@/types/project';
 import Image from 'next/image';
-import { ChevronDown, Calendar, MapPin } from 'lucide-react';
+import { ChevronDown, Calendar, MapPin, Pencil } from 'lucide-react';
 
 interface ProjectCardProps {
     project: Project;
+    onEdit?: (project: Project) => void;
 }
 
-export default function ProjectCard({ project }: ProjectCardProps) {
+export default function ProjectCard({ project, onEdit }: ProjectCardProps) {
     const isHighProgress = project.progress >= 50;
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow group/card relative">
             {/* Header Image */}
             <div className="relative h-32 w-full">
                 <Image
@@ -20,6 +21,20 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                     className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+
+                {/* Edit Button (Visible on hover) */}
+                {onEdit && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(project);
+                        }}
+                        className="absolute top-2 left-2 p-1.5 bg-white/90 text-gray-700 rounded-full shadow-sm opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-orange-500 hover:text-white"
+                        title="แก้ไขข้อมูล"
+                    >
+                        <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                )}
 
                 {/* Progress Badge */}
                 <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${isHighProgress ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>

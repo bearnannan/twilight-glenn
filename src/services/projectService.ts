@@ -32,3 +32,14 @@ export const seedProjects = async () => {
         return false;
     }
 };
+
+export const updateProject = async (id: string | number, data: Partial<Project>) => {
+    try {
+        const docRef = doc(db, COLLECTION_NAME, String(id));
+        await setDoc(docRef, data, { merge: true }); // Merge checks for existing fields
+        return true;
+    } catch (error) {
+        console.error("Error updating project: ", error);
+        return false;
+    }
+};
