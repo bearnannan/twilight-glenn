@@ -1,29 +1,50 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
 import { X, Save, Plus, Trash2, Sparkles } from 'lucide-react';
 
 interface EditProjectModalProps {
-    project: Project;
+    project: Project | null;
     isOpen: boolean;
     onClose: () => void;
-    onSave: (id: string | number, data: Partial<Project>) => Promise<void>;
+    onSave: (data: Partial<Project>, id?: string | number) => Promise<void>;
 }
 
 export default function EditProjectModal({ project, isOpen, onClose, onSave }: EditProjectModalProps) {
-    const [formData, setFormData] = useState<Partial<Project>>({
-        title: project.title,
-        progress: project.progress,
-        locationName: project.locationName,
-    });
+    // Default values for create mode
+    const defaultForm: Partial<Project> = {
+        title: '',
+        progress: 0,
+        locationName: '',
+    };
 
-    // Separate state for complex fields
-    const [lat, setLat] = useState(String(project.coordinates.lat));
-    const [lng, setLng] = useState(String(project.coordinates.lng));
+    const [formData, setFormData] = useState<Partial<Project>>(defaultForm);
+    const [lat, setLat] = useState('');
+    const [lng, setLng] = useState('');
+    const [actionItems, setActionItems] = useState<string[]>([]);
 
-    // Manage Action Items as array
-    const [actionItems, setActionItems] = useState<string[]>(project.actionItems);
+    // Reset form when opening/changing project
+    useEffect(() => {
+        if (isOpen) {
+            if (project) {
+                setFormData({
+                    title: project.title,
+                    progress: project.progress,
+                    locationName: project.locationName,
+                });
+                setLat(String(project.coordinates.lat));
+                setLng(String(project.coordinates.lng));
+                setActionItems(project.actionItems);
+            } else {
+                // Create Mode
+                setFormData(defaultForm);
+                setLat('');
+                setLng('');
+                setActionItems([]);
+            }
+        }
+    }, [isOpen, project]);
 
     const [isSaving, setIsSaving] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -61,8 +82,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
             const data = await res.json();
 
             if (data.suggestedItems && Array.isArray(data.suggestedItems)) {
-                // Determine if we should append or replace. 
-                // Let's append items for better UX
+                // Better UX: Append items
                 const newItems = [...actionItems, ...data.suggestedItems].filter(item => item.trim() !== '');
                 setActionItems(newItems);
             } else {
@@ -83,13 +103,20 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
         const updatedData: Partial<Project> = {
             ...formData,
             coordinates: {
-                lat: parseFloat(lat) || project.coordinates.lat,
-                lng: parseFloat(lng) || project.coordinates.lng,
+                lat: parseFloat(lat) || 0,
+                lng: parseFloat(lng) || 0,
             },
             actionItems: actionItems.filter(item => item.trim() !== ''),
+            // Default image if missing (especially for new projects)
+            imageUrl: project?.imageUrl || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=800&auto=format&fit=crop'
         };
 
-        await onSave(project.id, updatedData);
+        if (project) {
+            await onSave(updatedData, project.id);
+        } else {
+            await onSave(updatedData);
+        }
+
         setIsSaving(false);
         onClose();
     };
@@ -98,7 +125,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
                 <div className="flex items-center justify-between p-4 border-b bg-white z-10 shrink-0">
-                    <h3 className="font-bold text-lg">แก้ไขโครงการ</h3>
+                    <h3 className="font-bold text-lg">{project ? 'แก้ไขโครงการ' : 'สร้างโครงการใหม่'}</h3>
                     <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full">
                         <X className="w-5 h-5 text-gray-500" />
                     </button>
@@ -114,6 +141,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                                 className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="เช่น ก่อสร้างอาคาร A"
                             />
                         </div>
 
@@ -136,6 +164,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                                     className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
                                     value={formData.locationName}
                                     onChange={(e) => setFormData({ ...formData, locationName: e.target.value })}
+                                    placeholder="เช่น กรุงเทพฯ"
                                 />
                             </div>
                         </div>
@@ -150,6 +179,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                                     className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
                                     value={lat}
                                     onChange={(e) => setLat(e.target.value)}
+                                    placeholder="13.7563"
                                 />
                             </div>
                             <div>
@@ -161,6 +191,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                                     className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none"
                                     value={lng}
                                     onChange={(e) => setLng(e.target.value)}
+                                    placeholder="100.5018"
                                 />
                             </div>
                         </div>
@@ -227,7 +258,7 @@ export default function EditProjectModal({ project, isOpen, onClose, onSave }: E
                         disabled={isSaving}
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2"
                     >
-                        {isSaving ? 'กำลังบันทึก...' : <><Save className="w-4 h-4" /> บันทึก</>}
+                        {isSaving ? 'กำลังบันทึก...' : <><Save className="w-4 h-4" /> {project ? 'บันทึก' : 'สร้างโครงการ'}</>}
                     </button>
                 </div>
             </div>

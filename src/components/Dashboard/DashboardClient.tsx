@@ -5,7 +5,7 @@ import { Project } from '@/types/project';
 import MapSection from './MapSection';
 import Sidebar from './Sidebar';
 import EditProjectModal from './EditProjectModal';
-import { getProjects, seedProjects, updateProject } from '@/services/projectService';
+import { getProjects, seedProjects, updateProject, addProject, deleteProject } from '@/services/projectService';
 
 interface DashboardClientProps {
     initialProjects: Project[];
@@ -14,14 +14,15 @@ interface DashboardClientProps {
 export default function DashboardClient({ initialProjects }: DashboardClientProps) {
     const [selectedProjectId, setSelectedProjectId] = useState<string | number | null>(null);
     const [projects, setProjects] = useState<Project[]>(initialProjects);
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
 
     // Fetch data from Firestore on mount
     const refreshData = async () => {
         const data = await getProjects();
-        if (data.length > 0) {
-            setProjects(data);
-        }
+        setProjects(data); // Always update, empty or not
     };
 
     useEffect(() => {
@@ -46,14 +47,39 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
 
     const handleEditProject = (project: Project) => {
         setEditingProject(project);
+        setIsModalOpen(true);
     };
 
-    const handleUpdateProject = async (id: string | number, data: Partial<Project>) => {
-        const success = await updateProject(id, data);
+    const handleAddProject = () => {
+        setEditingProject(null); // Clear editing project -> Create Mode
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteProject = async (id: string | number) => {
+        const success = await deleteProject(id);
         if (success) {
-            // Optimistic update or refresh
             refreshData();
-            // alert('บันทึกข้อมูลเรียบร้อย!'); // Optional
+            if (selectedProjectId === id) setSelectedProjectId(null);
+        } else {
+            alert('ลบโครงการไม่สำเร็จ');
+        }
+    };
+
+    const handleUpdateProject = async (data: Partial<Project>, id?: string | number) => {
+        let success = false;
+        if (id) {
+            // Update existing
+            success = await updateProject(id, data);
+        } else {
+            // Create new
+            const newId = await addProject(data as Omit<Project, 'id'>);
+            success = !!newId;
+        }
+
+        if (success) {
+            refreshData();
+            setIsModalOpen(false);
+            setEditingProject(null);
         } else {
             alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
@@ -78,15 +104,20 @@ export default function DashboardClient({ initialProjects }: DashboardClientProp
                     onSelectProject={handleSelectProject}
                     onSeedData={handleSeedData}
                     onEditProject={handleEditProject}
+                    onAddProject={handleAddProject}
+                    onDeleteProject={handleDeleteProject}
                 />
             </div>
 
             {/* Edit Modal */}
-            {editingProject && (
+            {isModalOpen && (
                 <EditProjectModal
                     project={editingProject}
-                    isOpen={!!editingProject}
-                    onClose={() => setEditingProject(null)}
+                    isOpen={isModalOpen}
+                    onClose={() => {
+                        setIsModalOpen(false);
+                        setEditingProject(null);
+                    }}
                     onSave={handleUpdateProject}
                 />
             )}

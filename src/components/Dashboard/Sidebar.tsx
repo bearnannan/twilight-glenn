@@ -4,7 +4,7 @@ import { useRef, useEffect } from 'react';
 
 import { Project } from '@/types/project';
 import ProjectCard from './ProjectCard';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Plus } from 'lucide-react';
 
 interface SidebarProps {
     projects: Project[];
@@ -12,6 +12,8 @@ interface SidebarProps {
     onSelectProject: (id: string | number) => void;
     onSeedData?: () => void;
     onEditProject?: (project: Project) => void;
+    onAddProject?: () => void;
+    onDeleteProject?: (id: string | number) => void;
 }
 
 export default function Sidebar({
@@ -19,7 +21,9 @@ export default function Sidebar({
     selectedProjectId,
     onSelectProject,
     onSeedData,
-    onEditProject
+    onEditProject,
+    onAddProject,
+    onDeleteProject
 }: SidebarProps) {
     const itemRefs = useRef<{ [key: string | number]: HTMLDivElement | null }>({});
 
@@ -40,9 +44,20 @@ export default function Sidebar({
                     <ClipboardList className="w-5 h-5 text-orange-500" />
                     <h2 className="font-bold text-lg">รายงานความคืบหน้า</h2>
                 </div>
-                <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
-                    {projects.length} รายการ
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
+                        {projects.length}
+                    </span>
+                    {onAddProject && (
+                        <button
+                            onClick={onAddProject}
+                            className="p-1.5 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors shadow-sm"
+                            title="เพิ่มโครงการใหม่"
+                        >
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Contact List / Feed */}
@@ -60,6 +75,7 @@ export default function Sidebar({
                         <ProjectCard
                             project={project}
                             onEdit={onEditProject}
+                            onDelete={onDeleteProject}
                         />
                     </div>
                 ))}
