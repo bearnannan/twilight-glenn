@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
 import MapSection from './MapSection';
